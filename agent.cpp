@@ -3,6 +3,7 @@
 #include <map>
 #include <limits>
 #include <algorithm>
+#include <sstream>
 
 class Tile{
 public:
@@ -21,19 +22,24 @@ public:
 
 class Map{
 	std::vector<std::vector<Tile>> map;
-	int col = 0;
+	int height_ = 0;
 	int width_ = 0;
 public:
 	Map(){
 		int id = 0;
+		std::vector<std::string> lines;
 		std::string line;
 		while(std::getline(std::cin, line)){
-			std::vector<Tile> row;
+			lines.push_back(line);
 			if(line.length() > width_)
 				width_ = line.length();
+			height_++;
+		}
+		for(int col = 0; col < height_; ++col){
+			std::vector<Tile> row;
 
-			for(int i = 0; i < width_; i++){
-				char & c = line[i];
+			for(int i = 0; i < width_; ++i){
+				char & c = lines[col][i];
 				switch(c){
 					case '#':
 						row.push_back(Tile(Tile::Type::wall, i, col, id++));
@@ -63,12 +69,11 @@ public:
 				}
 			}
 			map.push_back(row);
-			col++;
 		}
 	}
 
 	int height(){
-		return col;
+		return height_;
 	}
 
 	int width(){
@@ -184,14 +189,14 @@ bool pathFind(Map & map, Tile & goal, Tile & player){
 			if(u.y < map.height() - 1)
 				if(Q[i].id == map(u.x,u.y+1).id)
 					n.push_back(Q[i]);
-			else if(u.y > 0)
-				if(Q[i].id == map(u.x,u.y-1).id)
+			else if(u.x < map.width()-1)
+				if(Q[i].id == map(u.x+1,u.y).id)
 					n.push_back(Q[i]);
 			else if(u.x > 0)
 				if(Q[i].id == map(u.x-1,u.y).id)
 					n.push_back(Q[i]);
-			else if(u.x < map.width()-1)
-				if(Q[i].id == map(u.x+1,u.y).id)
+			else if(u.y > 0)
+				if(Q[i].id == map(u.x,u.y-1).id)
 					n.push_back(Q[i]);
 		}
 
@@ -209,6 +214,7 @@ bool pathFind(Map & map, Tile & goal, Tile & player){
 	if(prev[player.id] >= 0){
 		int currentID = player.id;
 		int nextID = prev[currentID];
+		std::stringstream ss;
 
 		while(nextID >= 0 && nextID < map.height()*map.width()){
 			int currX = currentID % map.width();
@@ -216,20 +222,31 @@ bool pathFind(Map & map, Tile & goal, Tile & player){
 
 			if(nextX != currX){
 				if(nextX < currX)
-					std::cout << "L ";
+					ss << "L ";
 				else
-					std::cout << "R ";
+					ss << "R ";
 			}
 			else{
 				if(nextID < currentID)
-					std::cout << "U ";
+					ss << "U ";
 				else
-					std::cout << "D ";
+					ss << "D ";
 			}
 			currentID = nextID;
 			nextID = prev[currentID];
+
+			/*
+			for(int x = 0; x < map.width(); ++x){
+				for(int y = 0; y < map.height(); ++y){
+					if(map(x,y).id == currentID && map(x,y).type == Tile::Type::goal)
+						nextID = -1;
+				}
+			}
+			*/
 		}
-		std::cout << std::endl;
+		std::string s = ss.str();
+		s = s.substr(0,s.length()-1);
+		std::cout << s<<std::endl;
 		return true;
 	}
 
